@@ -6,10 +6,11 @@ module Main exposing (..)
 --   https://guide.elm-lang.org/architecture/text_fields.html
 
 import Browser
+import Dict exposing (Dict)
 import Html exposing (Html, div, input, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
-import Parser exposing ((|.), (|=), DeadEnd, Parser, float, int, keyword, spaces, succeed, symbol)
+import Parser exposing ((|.), (|=), DeadEnd, Parser, int, spaces, succeed, symbol)
 import ParserExtra exposing (deadEndsToString)
 
 
@@ -43,27 +44,21 @@ import ParserExtra exposing (deadEndsToString)
 -- 0% Ageplayer
 
 
-lineParser : Parser KinkPercent
+lineParser : Parser ( String, Percentage )
 lineParser =
     let
-        kinkName : Parser Kink
+        kinkName : Parser String
         kinkName =
-            Parser.getChompedString
-                (Parser.chompUntilEndOr " ")
-                |> Parser.andThen kinkParser
+            Parser.chompUntilEndOr "\n"
+                |> Parser.getChompedString
+                |> Parser.map String.trimRight
     in
-    succeed (\percent name -> KinkPercent name percent)
+    succeed (\percent name -> ( name, percent ))
         |. spaces
         |= int
         |. symbol "%"
         |. spaces
         |= kinkName
-
-
-type alias KinkPercent =
-    { kink : Kink
-    , percent : Int
-    }
 
 
 kinkParser : String -> Parser Kink
@@ -148,6 +143,39 @@ kinkParser input =
             Parser.problem ("kink name " ++ input ++ " is not recognized")
 
 
+type alias Percentage =
+    Int
+
+
+type alias TestResults =
+    { ageplayer : Percentage
+    , boyOrGirl : Percentage
+    , brat : Percentage
+    , bratTamer : Percentage
+    , daddyOrMommy : Percentage
+    , degradee : Percentage
+    , degrader : Percentage
+    , dominant : Percentage
+    , exhibitionist : Percentage
+    , experimentalist : Percentage
+    , masochist : Percentage
+    , masterOrMistress : Percentage
+    , nonMonogamist : Percentage
+    , owner : Percentage
+    , pet : Percentage
+    , primalHunter : Percentage
+    , primalPrey : Percentage
+    , rigger : Percentage
+    , ropeBunny : Percentage
+    , sadist : Percentage
+    , slave : Percentage
+    , submissive : Percentage
+    , switch : Percentage
+    , vanilla : Percentage
+    , voyeur : Percentage
+    }
+
+
 type Kink
     = Dominant
     | Rigger
@@ -187,13 +215,14 @@ main =
 
 type alias Model =
     { content : String
-    , results : Result (List DeadEnd) KinkPercent
+    , results : List (Result (List DeadEnd) ( String, Percentage ))
+    , resultsDict : Dict String Percentage
     }
 
 
 init : Model
 init =
-    { content = "", results = Err [] }
+    { content = "", results = [], resultsDict = Dict.empty }
 
 
 
@@ -210,7 +239,9 @@ update msg model =
         Parse newContent ->
             { model
                 | content = newContent
-                , results = Parser.run lineParser newContent
+
+                -- , results = Parser.run lineParser newContent
+                , results = newContent |> String.lines |> List.map (Parser.run lineParser)
             }
 
 
@@ -293,27 +324,162 @@ showKink kink =
             "Ageplayer"
 
 
-viewKinkPercent : KinkPercent -> String
-viewKinkPercent kinkPercent =
-    showKink kinkPercent.kink ++ "\t" ++ String.fromInt kinkPercent.percent ++ "%"
-
-
 
 -- VIEW
+
+
+toDict : List (Result (List DeadEnd) ( String, Percentage )) -> Result (List DeadEnd) (Dict String Percentage)
+toDict results =
+    let
+        toAssocs : List (Result (List DeadEnd) ( String, Percentage )) -> Result (List DeadEnd) (List ( String, Percentage ))
+        toAssocs =
+            List.foldl
+                (Result.map2 (::))
+                (Ok [])
+    in
+    results |> toAssocs |> Result.map Dict.fromList
+
+
+myDictGet : comparable -> Dict comparable v -> Result comparable v
+myDictGet key dict =
+    case Dict.get key dict of
+        Just value ->
+            Ok value
+
+        Nothing ->
+            Err key
+
+
+toRecord : Dict String Percentage -> Result String TestResults
+toRecord dict =
+    let
+        get key =
+            myDictGet key dict
+
+        ageplayer =
+            get "Ageplayer"
+
+        boyOrGirl =
+            get "Boy/Girl"
+
+        brat =
+            get "Brat"
+
+        bratTamer =
+            get "Brat tamer"
+
+        daddyOrMommy =
+            get "Daddy/Mommy"
+
+        degradee =
+            get "Degradee"
+
+        degrader =
+            get "Degrader"
+
+        dominant =
+            get "Dominant"
+
+        exhibitionist =
+            get "Exhibitionist"
+
+        experimentalist =
+            get "Experimentalist"
+
+        masochist =
+            get "Masochist"
+
+        masterOrMistress =
+            get "Master/Mistress"
+
+        nonMonogamist =
+            get "Non-monogamist"
+
+        owner =
+            get "Owner"
+
+        pet =
+            get "Pet"
+
+        primalHunter =
+            get "Primal (Hunter)"
+
+        primalPrey =
+            get "Primal (Prey)"
+
+        rigger =
+            get "Rigger"
+
+        ropeBunny =
+            get "Rope bunny"
+
+        sadist =
+            get "Sadist"
+
+        slave =
+            get "Slave"
+
+        submissive =
+            get "Submissive"
+
+        switch =
+            get "Switch"
+
+        vanilla =
+            get "Vanilla"
+
+        voyeur =
+            get "Voyeur"
+
+        apply x f =
+            f x
+    in
+    Ok TestResults
+        |> Result.map2 apply ageplayer
+        |> Result.map2 apply boyOrGirl
+        |> Result.map2 apply brat
+        |> Result.map2 apply bratTamer
+        |> Result.map2 apply daddyOrMommy
+        |> Result.map2 apply degradee
+        |> Result.map2 apply degrader
+        |> Result.map2 apply dominant
+        |> Result.map2 apply exhibitionist
+        |> Result.map2 apply experimentalist
+        |> Result.map2 apply masochist
+        |> Result.map2 apply masterOrMistress
+        |> Result.map2 apply nonMonogamist
+        |> Result.map2 apply owner
+        |> Result.map2 apply pet
+        |> Result.map2 apply primalHunter
+        |> Result.map2 apply primalPrey
+        |> Result.map2 apply rigger
+        |> Result.map2 apply ropeBunny
+        |> Result.map2 apply sadist
+        |> Result.map2 apply slave
+        |> Result.map2 apply submissive
+        |> Result.map2 apply switch
+        |> Result.map2 apply vanilla
+        |> Result.map2 apply voyeur
 
 
 view : Model -> Html Msg
 view model =
     let
-        results =
-            case model.results of
+        toString results =
+            case results of
                 Err errors ->
                     deadEndsToString errors
 
-                Ok kinkPercent ->
-                    viewKinkPercent kinkPercent
+                Ok ( name, percentage ) ->
+                    name ++ "\t" ++ String.fromInt percentage ++ "%"
     in
     div []
-        [ input [ placeholder "Kink percent", value model.content, onInput Parse ] []
-        , div [] [ text results ]
+        [ textarea [ placeholder "Kink percent", value model.content, onInput Parse ] []
+
+        -- , div []
+        --     (model.results
+        --         |> List.map toString
+        --         |> List.map (\dupa -> div [] [ text dupa ])
+        --     )
+        , div [] [ model.results |> toDict |> Result.mapError deadEndsToString |> Result.andThen toRecord |> Debug.toString |> text ]
         ]
