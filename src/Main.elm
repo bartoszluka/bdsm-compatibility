@@ -1,47 +1,12 @@
 module Main exposing (..)
 
--- A text input for reversing text. Very useful!
---
--- Read how it works:
---   https://guide.elm-lang.org/architecture/text_fields.html
-
 import Browser
 import Dict exposing (Dict)
-import Html exposing (Html, div, input, text, textarea)
+import Html exposing (Html, div, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Parser exposing ((|.), (|=), DeadEnd, Parser, int, spaces, succeed, symbol)
-import ParserExtra exposing (deadEndToString, deadEndsToString)
-
-
-
--- MAIN
--- == Results from bdsmtest.org ==
--- 98% Dominant
--- 94% Rigger
--- 94% Sadist
--- 94% Brat tamer
--- 76% Experimentalist
--- 61% Non-monogamist
--- 58% Masochist
--- 56% Primal (Hunter)
--- 46% Vanilla
--- 33% Master/Mistress
--- 32% Degrader
--- 27% Owner
--- 19% Switch
--- 11% Rope bunny
--- 7% Exhibitionist
--- 4% Submissive
--- 3% Voyeur
--- 0% Boy/Girl
--- 0% Slave
--- 0% Daddy/Mommy
--- 0% Primal (Prey)
--- 0% Pet
--- 0% Brat
--- 0% Degradee
--- 0% Ageplayer
+import ParserExtra exposing (deadEndToString)
 
 
 lineParser : Parser ( String, Percentage )
@@ -59,88 +24,6 @@ lineParser =
         |. symbol "%"
         |. spaces
         |= kinkName
-
-
-kinkParser : String -> Parser Kink
-kinkParser input =
-    case input of
-        "Dominant" ->
-            succeed Dominant
-
-        "Rigger" ->
-            succeed Rigger
-
-        "Sadist" ->
-            succeed Sadist
-
-        "Brat tamer" ->
-            succeed BratTamer
-
-        "Experimentalist" ->
-            succeed Experimentalist
-
-        "Non-monogamist" ->
-            succeed NonMonogamist
-
-        "Masochist" ->
-            succeed Masochist
-
-        "Primal (Hunter)" ->
-            succeed PrimalHunter
-
-        "Vanilla" ->
-            succeed Vanilla
-
-        "Master/Mistress" ->
-            succeed MasterOrMistress
-
-        "Degrader" ->
-            succeed Degrader
-
-        "Owner" ->
-            succeed Owner
-
-        "Switch" ->
-            succeed Switch
-
-        "Rope bunny" ->
-            succeed RopeBunny
-
-        "Exhibitionist" ->
-            succeed Exhibitionist
-
-        "Submissive" ->
-            succeed Submissive
-
-        "Voyeur" ->
-            succeed Voyeur
-
-        "Boy/Girl" ->
-            succeed BoyOrGirl
-
-        "Slave" ->
-            succeed Slave
-
-        "Daddy/Mommy" ->
-            succeed DaddyOrMommy
-
-        "Primal (Prey)" ->
-            succeed PrimalPrey
-
-        "Pet" ->
-            succeed Pet
-
-        "Brat" ->
-            succeed Brat
-
-        "Degradee" ->
-            succeed Degradee
-
-        "Ageplayer" ->
-            succeed Ageplayer
-
-        _ ->
-            Parser.problem ("kink name " ++ input ++ " is not recognized")
 
 
 type alias Percentage =
@@ -176,32 +59,14 @@ type alias TestResults =
     }
 
 
-type Kink
-    = Dominant
-    | Rigger
-    | Sadist
-    | BratTamer
-    | Experimentalist
-    | NonMonogamist
-    | Masochist
-    | PrimalHunter
-    | Vanilla
-    | MasterOrMistress
-    | Degrader
-    | Owner
-    | Switch
-    | RopeBunny
-    | Exhibitionist
-    | Submissive
-    | Voyeur
-    | BoyOrGirl
-    | Slave
-    | DaddyOrMommy
-    | PrimalPrey
-    | Pet
-    | Brat
-    | Degradee
-    | Ageplayer
+calculateScore : TestResults -> TestResults -> Float
+calculateScore first second =
+    let
+        difference v1 v2 =
+            v1 - v2 |> abs
+    in
+    difference first.submissive second.dominant
+        |> toFloat
 
 
 main : Program () Model Msg
@@ -213,16 +78,27 @@ main =
 -- MODEL
 
 
+type alias Error =
+    String
+
+
 type alias Model =
-    { content : String
-    , results : List (Result (List DeadEnd) ( String, Percentage ))
-    , resultsDict : Dict String Percentage
+    { firstInput : String
+    , secondInput : String
+    , firstPersonResults : Result (List Error) TestResults
+    , secondPersonResults : Result (List Error) TestResults
+    , finalScore : Maybe Float
     }
 
 
 init : Model
 init =
-    { content = "", results = [], resultsDict = Dict.empty }
+    { firstInput = ""
+    , secondInput = ""
+    , firstPersonResults = Err []
+    , secondPersonResults = Err []
+    , finalScore = Nothing
+    }
 
 
 
@@ -230,98 +106,49 @@ init =
 
 
 type Msg
-    = Parse String
+    = ParseFirst String
+    | ParseSecond String
 
 
 update : Msg -> Model -> Model
 update msg model =
-    case msg of
-        Parse newContent ->
-            { model
-                | content = newContent
+    let
+        parseInput input =
+            let
+                isJust maybe =
+                    case maybe of
+                        Just _ ->
+                            True
 
-                -- , results = Parser.run lineParser newContent
-                , results = newContent |> String.lines |> List.map (Parser.run lineParser)
+                        Nothing ->
+                            False
+
+                startsWithDigit =
+                    String.trimLeft >> String.left 1 >> String.toInt >> isJust
+            in
+            input
+                |> String.lines
+                -- Maybe parse the lines here so that this filtering is unnecessary
+                |> List.filter startsWithDigit
+                |> List.map (Parser.run lineParser)
+                |> toDict
+                |> Result.mapError (List.map deadEndToString)
+                |> Result.andThen toRecord
+    in
+    case msg of
+        ParseFirst newContent ->
+            { model
+                | firstInput = newContent
+                , firstPersonResults =
+                    parseInput newContent
             }
 
-
-showKink : Kink -> String
-showKink kink =
-    case kink of
-        Dominant ->
-            "Dominant"
-
-        Rigger ->
-            "Rigger"
-
-        Sadist ->
-            "Sadist"
-
-        BratTamer ->
-            "Brat tamer"
-
-        Experimentalist ->
-            "Experimentalist"
-
-        NonMonogamist ->
-            "Non-monogamist"
-
-        Masochist ->
-            "Masochist"
-
-        PrimalHunter ->
-            "Primal (Hunter)"
-
-        Vanilla ->
-            "Vanilla"
-
-        MasterOrMistress ->
-            "Master/Mistress"
-
-        Degrader ->
-            "Degrader"
-
-        Owner ->
-            "Owner"
-
-        Switch ->
-            "Switch"
-
-        RopeBunny ->
-            "Rope bunny"
-
-        Exhibitionist ->
-            "Exhibitionist"
-
-        Submissive ->
-            "Submissive"
-
-        Voyeur ->
-            "Voyeur"
-
-        BoyOrGirl ->
-            "Boy/Girl"
-
-        Slave ->
-            "Slave"
-
-        DaddyOrMommy ->
-            "Daddy/Mommy"
-
-        PrimalPrey ->
-            "Primal (Prey)"
-
-        Pet ->
-            "Pet"
-
-        Brat ->
-            "Brat"
-
-        Degradee ->
-            "Degradee"
-
-        Ageplayer ->
-            "Ageplayer"
+        ParseSecond newContent ->
+            { model
+                | secondInput = newContent
+                , secondPersonResults =
+                    parseInput newContent
+            }
 
 
 
@@ -480,29 +307,23 @@ toRecord dict =
 
 view : Model -> Html Msg
 view model =
-    let
-        toString results =
-            case results of
-                Err errors ->
-                    deadEndsToString errors
-
-                Ok ( name, percentage ) ->
-                    name ++ "\t" ++ String.fromInt percentage ++ "%"
-    in
     div []
-        [ textarea [ placeholder "Kink percent", value model.content, onInput Parse ] []
-
-        -- , div []
-        --     (model.results
-        --         |> List.map toString
-        --         |> List.map (\dupa -> div [] [ text dupa ])
-        --     )
+        [ textarea [ placeholder "first input", value model.firstInput, onInput ParseFirst ] []
+        , textarea [ placeholder "second input", value model.secondInput, onInput ParseSecond ] []
         , div []
-            [ model.results
-                |> toDict
-                |> Result.mapError (List.map deadEndToString)
-                |> Result.andThen toRecord
+            [ model.firstPersonResults
                 |> Debug.toString
+                |> text
+            ]
+        , div []
+            [ model.secondPersonResults
+                |> Debug.toString
+                |> text
+            ]
+        , div []
+            [ model.finalScore
+                |> Maybe.map String.fromFloat
+                |> Maybe.withDefault "not calculated"
                 |> text
             ]
         ]
