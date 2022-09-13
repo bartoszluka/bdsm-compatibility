@@ -11,7 +11,7 @@ import Html exposing (Html, div, input, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput)
 import Parser exposing ((|.), (|=), DeadEnd, Parser, int, spaces, succeed, symbol)
-import ParserExtra exposing (deadEndsToString)
+import ParserExtra exposing (deadEndToString, deadEndsToString)
 
 
 
@@ -350,7 +350,7 @@ myDictGet key dict =
             Err key
 
 
-toRecord : Dict String Percentage -> Result String TestResults
+toRecord : Dict String Percentage -> Result (List String) TestResults
 toRecord dict =
     let
         get key =
@@ -431,35 +431,51 @@ toRecord dict =
         voyeur =
             get "Voyeur"
 
-        apply x f =
-            f x
+        addToRecordOrNotFound : Result String a -> Result (List String) (a -> b) -> Result (List String) b
+        addToRecordOrNotFound valueToInsert recordBuilder =
+            case recordBuilder of
+                Err errorList ->
+                    case valueToInsert of
+                        Err notFound ->
+                            Err (notFound :: errorList)
+
+                        Ok _ ->
+                            Err errorList
+
+                Ok soFarOk ->
+                    case valueToInsert of
+                        Err notFound ->
+                            Err [ notFound ]
+
+                        Ok found ->
+                            Ok (soFarOk found)
     in
     Ok TestResults
-        |> Result.map2 apply ageplayer
-        |> Result.map2 apply boyOrGirl
-        |> Result.map2 apply brat
-        |> Result.map2 apply bratTamer
-        |> Result.map2 apply daddyOrMommy
-        |> Result.map2 apply degradee
-        |> Result.map2 apply degrader
-        |> Result.map2 apply dominant
-        |> Result.map2 apply exhibitionist
-        |> Result.map2 apply experimentalist
-        |> Result.map2 apply masochist
-        |> Result.map2 apply masterOrMistress
-        |> Result.map2 apply nonMonogamist
-        |> Result.map2 apply owner
-        |> Result.map2 apply pet
-        |> Result.map2 apply primalHunter
-        |> Result.map2 apply primalPrey
-        |> Result.map2 apply rigger
-        |> Result.map2 apply ropeBunny
-        |> Result.map2 apply sadist
-        |> Result.map2 apply slave
-        |> Result.map2 apply submissive
-        |> Result.map2 apply switch
-        |> Result.map2 apply vanilla
-        |> Result.map2 apply voyeur
+        |> addToRecordOrNotFound ageplayer
+        |> addToRecordOrNotFound boyOrGirl
+        |> addToRecordOrNotFound brat
+        |> addToRecordOrNotFound bratTamer
+        |> addToRecordOrNotFound daddyOrMommy
+        |> addToRecordOrNotFound degradee
+        |> addToRecordOrNotFound degrader
+        |> addToRecordOrNotFound dominant
+        |> addToRecordOrNotFound exhibitionist
+        |> addToRecordOrNotFound experimentalist
+        |> addToRecordOrNotFound masochist
+        |> addToRecordOrNotFound masterOrMistress
+        |> addToRecordOrNotFound nonMonogamist
+        |> addToRecordOrNotFound owner
+        |> addToRecordOrNotFound pet
+        |> addToRecordOrNotFound primalHunter
+        |> addToRecordOrNotFound primalPrey
+        |> addToRecordOrNotFound rigger
+        |> addToRecordOrNotFound ropeBunny
+        |> addToRecordOrNotFound sadist
+        |> addToRecordOrNotFound slave
+        |> addToRecordOrNotFound submissive
+        |> addToRecordOrNotFound switch
+        |> addToRecordOrNotFound vanilla
+        |> addToRecordOrNotFound voyeur
 
 
 view : Model -> Html Msg
@@ -481,5 +497,12 @@ view model =
         --         |> List.map toString
         --         |> List.map (\dupa -> div [] [ text dupa ])
         --     )
-        , div [] [ model.results |> toDict |> Result.mapError deadEndsToString |> Result.andThen toRecord |> Debug.toString |> text ]
+        , div []
+            [ model.results
+                |> toDict
+                |> Result.mapError (List.map deadEndToString)
+                |> Result.andThen toRecord
+                |> Debug.toString
+                |> text
+            ]
         ]
