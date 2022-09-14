@@ -106,11 +106,11 @@ testResultsFuzzer =
 suite : Test
 suite =
     describe "The TestResults module"
-        [ fuzz testResultsFuzzer "every score should be between 0 and 100" <|
-            \testResults ->
+        [ fuzz (Fuzz.tuple ( testResultsFuzzer, testResultsFuzzer )) "every score should be between 0 and 100" <|
+            \( results1, results2 ) ->
                 let
                     score =
-                        calculateScore testResults testResults
+                        calculateScore results1 results2
                 in
                 Expect.all
                     [ Expect.atLeast 0
