@@ -59,14 +59,97 @@ type alias TestResults =
     }
 
 
+calculateScore2 : TestResults -> TestResults -> Float
+calculateScore2 first second =
+    let
+        difference ( selector1, selector2 ) =
+            abs (selector1 first - selector2 second)
+                + abs (selector2 first - selector1 second)
+
+        score list =
+            let
+                sum =
+                    List.sum list
+
+                len =
+                    List.length list
+                        |> toFloat
+            in
+            if len == 0 then
+                0
+
+            else
+                100 - (sum / (len * 2))
+    in
+    [ ( .submissive, .dominant )
+    , ( .rigger, .ropeBunny )
+    , ( .switch, .switch )
+    , ( .sadist, .masochist )
+    , ( .brat, .bratTamer )
+    , ( .experimentalist, .experimentalist )
+    , ( .nonMonogamist, .nonMonogamist )
+    , ( .primalHunter, .primalPrey )
+    , ( .vanilla, .vanilla )
+    , ( .masterOrMistress, .slave )
+    , ( .degrader, .degradee )
+    , ( .owner, .pet )
+    , ( .exhibitionist, .voyeur )
+    , ( .boyOrGirl, .daddyOrMommy )
+    , ( .ageplayer, .ageplayer )
+    ]
+        |> List.map (difference >> toFloat)
+        |> score
+
+
 calculateScore : TestResults -> TestResults -> Float
 calculateScore first second =
     let
-        difference v1 v2 =
-            v1 - v2 |> abs
+        difference ( selector1, selector2 ) =
+            abs (selector1 first - selector2 second)
+
+        score list =
+            let
+                sum =
+                    List.sum list
+
+                len =
+                    List.length list
+                        |> toFloat
+            in
+            if len == 0 then
+                0
+
+            else
+                100 - (sum / len)
     in
-    difference first.submissive second.dominant
-        |> toFloat
+    [ ( .submissive, .dominant )
+    , ( .dominant, .submissive )
+    , ( .rigger, .ropeBunny )
+    , ( .ropeBunny, .rigger )
+    , ( .switch, .switch )
+    , ( .sadist, .masochist )
+    , ( .masochist, .sadist )
+    , ( .brat, .bratTamer )
+    , ( .bratTamer, .brat )
+    , ( .experimentalist, .experimentalist )
+    , ( .nonMonogamist, .nonMonogamist )
+    , ( .primalHunter, .primalPrey )
+    , ( .primalPrey, .primalHunter )
+    , ( .vanilla, .vanilla )
+    , ( .masterOrMistress, .slave )
+    , ( .slave, .masterOrMistress )
+    , ( .degrader, .degradee )
+    , ( .degradee, .degrader )
+    , ( .owner, .pet )
+    , ( .pet, .owner )
+    , ( .exhibitionist, .voyeur )
+    , ( .voyeur, .exhibitionist )
+    , ( .boyOrGirl, .daddyOrMommy )
+    , ( .daddyOrMommy, .boyOrGirl )
+    , ( .ageplayer, .ageplayer )
+    ]
+        |> List.map (difference >> toFloat)
+        |> score
 
 
 main : Program () Model Msg
