@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import BdsmTestResults exposing (BdsmTestResults, MyError(..), calculateScore2, parseInput)
+import BdsmTestResults exposing (BdsmTestResults, MyError(..), calculateScore2, parseInput, showError)
 import Browser
 import Element exposing (..)
 import Element.Background as Background
@@ -111,13 +111,14 @@ view model =
         , el
             [ centerX ]
           <|
-            paragraph []
+            paragraph [ Font.size 50 ]
                 [ case model.finalScore of
                     Ok result ->
                         result
                             |> (*) 100
                             |> round
                             |> String.fromInt
+                            |> (\s -> "your score is " ++ s)
                             |> text
 
                     Err error ->
@@ -129,15 +130,19 @@ view model =
 viewInput : (String -> msg) -> String -> String -> Result (List MyError) BdsmTestResults -> String -> Element msg
 viewInput onChange placeholderText labelText results value =
     column [ width (px 500) ]
-        [ multiline [ Font.color backgroundColor ]
+        [ multiline [ Font.color white, Background.color backgroundColor ]
             { onChange = onChange
             , text = value
             , placeholder = Just <| placeholder [] (text placeholderText)
             , label = labelAbove [] (text labelText)
             , spellcheck = False
             }
-        , paragraph []
-            [ text (Debug.toString results) ]
+        , case results of
+            Ok _ ->
+                text "everything is correct :)"
+
+            Err errors ->
+                column [] <| List.map (showError >> text) errors
         ]
 
 

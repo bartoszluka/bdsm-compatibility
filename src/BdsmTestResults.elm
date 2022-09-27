@@ -1,4 +1,4 @@
-module BdsmTestResults exposing (BdsmTestResults, MissingKink(..), MyError(..), average, calculateScore, calculateScore2, calculateScore2Squared, calculateScore3, calculateScore3Squared, calculateScoreSquared, parseInput, perfectMatch)
+module BdsmTestResults exposing (BdsmTestResults, MissingKink(..), MyError(..), average, calculateScore, calculateScore2, calculateScore2Squared, calculateScore3, calculateScore3Squared, calculateScoreSquared, parseInput, perfectMatch, showError)
 
 import Dict exposing (Dict)
 import Parser exposing ((|.), (|=), DeadEnd, Parser, int, spaces, succeed, symbol)
@@ -29,6 +29,16 @@ lineParser =
 type MyError
     = ParsingError DeadEnd
     | MissingValue String
+
+
+showError : MyError -> String
+showError error =
+    case error of
+        ParsingError deadEnd ->
+            deadEndToString deadEnd
+
+        MissingValue value ->
+            "it looks like you didn't provide field" ++ value
 
 
 parseInput : String -> Result (List MyError) BdsmTestResults
