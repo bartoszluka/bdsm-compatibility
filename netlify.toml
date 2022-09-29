@@ -1,5 +1,5 @@
 [build]
-command = "chmod +x optimize.sh && ./optimize.sh"
+command = "chmod +x ./optimize.sh && ./optimize.sh"
 
 [[redirects]]
 from = "/*"
