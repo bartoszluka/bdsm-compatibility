@@ -15,7 +15,8 @@
             "elm/random": "1.0.0",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
-            "mdgriffith/elm-ui": "1.1.8"
+            "mdgriffith/elm-ui": "1.1.8",
+            "rtfeldman/elm-hex": "1.0.0"
         },
         "indirect": {
             "elm/bytes": "1.0.8",

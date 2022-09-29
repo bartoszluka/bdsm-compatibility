@@ -38,7 +38,7 @@ showError error =
             deadEndToString deadEnd
 
         MissingValue value ->
-            "it looks like you didn't provide field" ++ value
+            "it looks like you didn't provide a field: " ++ value
 
 
 parseInput : String -> Result (List MyError) BdsmTestResults
