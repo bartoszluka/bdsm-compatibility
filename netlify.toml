@@ -1,3 +1,6 @@
+[build]
+command = "./optimize.sh"
+
 [[redirects]]
 from = "/*"
 to = "/index.html"
