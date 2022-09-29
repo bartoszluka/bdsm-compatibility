@@ -1,5 +1,5 @@
 [build]
-command = "chmod +x ./optimize.sh && ./optimize.sh src/Main.elm"
+command = "npm install uglify-js --global && chmod +x ./optimize.sh && ./optimize.sh src/Main.elm"
 
 [[redirects]]
 from = "/*"
