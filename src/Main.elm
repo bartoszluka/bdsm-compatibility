@@ -124,10 +124,42 @@ view model =
     let
         content =
             column [ height fill, centerY ]
-                [ wrappedRow [ centerX, spacing 20 ]
-                    [ viewInput ParseFirst "first input" "paste your results" model.firstPersonResults model.firstInput
-                    , viewInput ParseSecond "second input" "paste your results" model.secondPersonResults model.secondInput
-                    ]
+                [ let
+                    { class, orientation } =
+                        -- Debug.log "device" <|
+                        classifyDevice model.dimensions
+
+                    beside =
+                        row [ centerX, spacing 20 ]
+                            [ viewInput ParseFirst "first input" "paste your results" model.firstPersonResults model.firstInput
+                            , viewInput ParseSecond "second input" "paste your results" model.secondPersonResults model.secondInput
+                            ]
+
+                    onTop =
+                        column [ centerX, spacing 20 ]
+                            [ viewInput ParseFirst "first input" "paste your results" model.firstPersonResults model.firstInput
+                            , viewInput ParseSecond "second input" "paste your results" model.secondPersonResults model.secondInput
+                            ]
+                  in
+                  case ( class, orientation ) of
+                    ( Desktop, Landscape ) ->
+                        beside
+
+                    ( BigDesktop, Landscape ) ->
+                        beside
+
+                    ( Tablet, _ ) ->
+                        onTop
+
+                    ( Phone, _ ) ->
+                        onTop
+
+                    ( Desktop, Portrait ) ->
+                        onTop
+
+                    ( BigDesktop, Portrait ) ->
+                        -- actually a tall phone
+                        onTop
                 , button
                     [ centerX
                     , Background.color (rgb255 0x88 0xC0 0xD0)
@@ -155,7 +187,17 @@ view model =
                 ]
     in
     column [ centerX, centerY, height fill ]
-        [ el [ Font.size 40, centerX ] (text "Hello world!") -- header
+        [ el
+            [ let
+                s =
+                    model.dimensions.height // 25
+              in
+              Font.size s
+            , centerX
+            ]
+            (text "BDSM compatibility test")
+
+        -- header
         , content
         , row [ Font.size 20, centerX, padding 10 ]
             -- footer
@@ -185,7 +227,7 @@ gray =
 
 viewInput : (String -> msg) -> String -> String -> Result (List MyError) BdsmTestResults -> String -> Element msg
 viewInput onChange placeholderText labelText results value =
-    column [ width (px 500) ]
+    column [ width (px 300) ]
         [ multiline [ Font.color white, Background.color backgroundColor ]
             { onChange = onChange
             , text = value
