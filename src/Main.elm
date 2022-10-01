@@ -179,7 +179,14 @@ view model =
                                     |> (*) 100
                                     |> round
                                     |> String.fromInt
-                                    |> (\s -> "your score is " ++ s)
+                                    |> (\s ->
+                                            case s of
+                                                "69" ->
+                                                    "your score is " ++ s ++ " (nice)"
+
+                                                _ ->
+                                                    "your score is " ++ s
+                                       )
                                     |> text
 
                             Err error ->
