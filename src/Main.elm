@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import BdsmTestResults exposing (BdsmTestResults, MyError(..), calculateScore2, parseInput, showError)
+import BdsmTestResults exposing (BdsmTestResults, MyError(..), calculateScoreSquared, parseInput, showError)
 import Browser
 import Browser.Events exposing (onResize)
 import Element exposing (..)
@@ -100,7 +100,7 @@ update msg model =
         CalculateScore ->
             case ( model.firstPersonResults, model.secondPersonResults ) of
                 ( Ok score1, Ok score2 ) ->
-                    { model | finalScore = Ok <| calculateScore2 score1 score2 }
+                    { model | finalScore = Ok <| calculateScoreSquared score1 score2 }
 
                 ( Err _, Ok _ ) ->
                     { model | finalScore = Err "something's wrong with the first result" }
@@ -123,7 +123,7 @@ view : Model -> Element Msg
 view model =
     let
         content =
-            column [ height fill, centerY ]
+            column [ height fill, centerY, centerX ]
                 [ let
                     { class, orientation } =
                         -- Debug.log "device" <|
@@ -136,16 +136,13 @@ view model =
                             ]
 
                     onTop =
-                        column [ centerX, spacing 20 ]
+                        column [ spacing 20 ]
                             [ viewInput ParseFirst "first input" "paste your results" model.firstPersonResults model.firstInput
                             , viewInput ParseSecond "second input" "paste your results" model.secondPersonResults model.secondInput
                             ]
                   in
                   case ( class, orientation ) of
                     ( Desktop, Landscape ) ->
-                        beside
-
-                    ( BigDesktop, Landscape ) ->
                         beside
 
                     ( Tablet, _ ) ->
@@ -160,14 +157,18 @@ view model =
                     ( BigDesktop, Portrait ) ->
                         -- actually a tall phone
                         onTop
-                , button
-                    [ centerX
-                    , Background.color (rgb255 0x88 0xC0 0xD0)
-                    , Font.color backgroundColor
-                    , Border.rounded 5
-                    , padding 7
-                    ]
-                    { onPress = Just CalculateScore, label = text "calculate!" }
+
+                    ( BigDesktop, Landscape ) ->
+                        -- actually a tall phone in landscape
+                        beside
+                , el [ padding 10, centerX ] <|
+                    button
+                        [ Background.color (rgb255 0x88 0xC0 0xD0)
+                        , Font.color backgroundColor
+                        , Border.rounded 5
+                        , padding 7
+                        ]
+                        { onPress = Just CalculateScore, label = text "calculate!" }
                 , el
                     [ centerX ]
                   <|
@@ -186,8 +187,13 @@ view model =
                         ]
                 ]
     in
-    column [ centerX, centerY, height fill ]
+    let
+        fontScale =
+            modular 20 1.25 >> round
+    in
+    column [ centerX, centerY, height fill, Font.size (fontScale 2) ]
         [ el
+            -- header
             [ let
                 s =
                     model.dimensions.height // 25
@@ -196,8 +202,6 @@ view model =
             , centerX
             ]
             (text "BDSM compatibility test")
-
-        -- header
         , content
         , row [ Font.size 20, centerX, padding 10 ]
             -- footer
