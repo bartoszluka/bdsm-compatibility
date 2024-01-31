@@ -137,7 +137,7 @@ suite : Test
 suite =
     describe "The TestResults module"
         [ skip <|
-            fuzz (Fuzz.tuple ( testResultsFuzzer, testResultsFuzzer )) "every score should be between 0 and 1" <|
+            fuzz (Fuzz.pair testResultsFuzzer testResultsFuzzer) "every score should be between 0 and 1" <|
                 \( results1, results2 ) ->
                     let
                         metrics =
@@ -210,7 +210,7 @@ suite =
                         ]
                         score
         , skip <|
-            fuzz (Fuzz.tuple ( testResultsFuzzer, testResultsFuzzer )) "scores should be symetric" <|
+            fuzz (Fuzz.pair testResultsFuzzer testResultsFuzzer) "scores should be symetric" <|
                 \( results1, results2 ) ->
                     let
                         calculation =
@@ -231,7 +231,7 @@ suite =
                             [ calculateScore, calculateScoreSquared, calculateScore2, calculateScore2Squared ]
 
                         perfectMatchShouldBeMaximum metric result =
-                            Expect.within (Expect.Absolute 0.00001) 1 (metric result (perfectMatch result))
+                            Expect.within (Expect.Absolute 1.0e-5) 1 (metric result (perfectMatch result))
                     in
                     Expect.all
                         (List.map

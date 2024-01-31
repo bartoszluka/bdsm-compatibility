@@ -10,6 +10,8 @@ Paste 2 results from [BDSM test](https://bdsmtest.org/) and see how compatible y
 
 ## TODO
 
-- [ ] implement logic for checking compatibility
-- [ ] UI
+- [x] implement logic for checking compatibility
+- [ ] sharing feature - sending a link with one field filled in
+- [x] Good phone experience
+- [ ] UI improvements
 - [ ] ~~require only result id (e.g. 2hcwUkSD) and use <https://github.com/hecrj/html-parser> to parse the results~~ impossible due to the data being fetched from JS
